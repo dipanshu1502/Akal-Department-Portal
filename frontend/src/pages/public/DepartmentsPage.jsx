@@ -49,7 +49,7 @@ export default function DepartmentsPage() {
 
       {/* Directory Hero */}
       <section className="directory-hero">
-        <div className="university-container" style={{ position: 'relative', zIndex: 1 }}>
+        <div className="university-container hero-section-inner">
           <span className="hero-kicker">Akal University · Academic Excellence</span>
           <h1>Academic Faculties & Departments</h1>
           <p>
@@ -73,7 +73,7 @@ export default function DepartmentsPage() {
               />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="filter-actions-wrap">
               <select
                 className="faculty-filter-select"
                 value={selectedFaculty}
@@ -102,17 +102,17 @@ export default function DepartmentsPage() {
       <section className="directory-section">
         <div className="university-container">
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '64px 0', color: '#64748B' }}>
-              <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+            <div className="dept-loading-state">
+              <div className="spinner-border text-primary" role="status">
                 <span className="visually-hidden">Loading departments...</span>
               </div>
-              <p style={{ marginTop: 16, fontSize: 16 }}>Loading academic departments from server...</p>
+              <p className="dept-loading-text">Loading academic departments from server...</p>
             </div>
           ) : filteredDepartments.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '64px 0', background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-              <BookOpen size={48} color="#94A3B8" style={{ marginBottom: 16 }} />
-              <h3 style={{ color: '#172333', fontSize: 20, fontWeight: 700 }}>No departments match your filter</h3>
-              <p style={{ color: '#64748B', maxWidth: 460, margin: '8px auto 20px' }}>
+            <div className="dept-empty-state">
+              <BookOpen size={48} className="dept-empty-icon" />
+              <h3 className="dept-empty-title">No departments match your filter</h3>
+              <p className="dept-empty-desc">
                 Try adjusting your search query or select "All Academic Faculties" to browse all active departments.
               </p>
               <button
@@ -131,7 +131,7 @@ export default function DepartmentsPage() {
                       <h2>{group.name}</h2>
                       {group.description && <p>{group.description}</p>}
                     </div>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#087BB5', backgroundColor: '#E0F2FE', padding: '3px 10px', borderRadius: 12 }}>
+                    <span className="faculty-chip">
                       {group.departments.length} {group.departments.length === 1 ? 'Department' : 'Departments'}
                     </span>
                   </div>

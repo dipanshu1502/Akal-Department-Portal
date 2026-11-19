@@ -3,16 +3,20 @@
  */
 
 :root {
-  /* Official Brand Palette from auts.ac.in */
-  --akal-gold: #EAA700;
-  --akal-gold-bright: #F9B900;
-  --akal-gold-hover: #D59400;
+  /* Official Brand Palette from auts.ac.in
+   * Canonical design tokens are defined in ./styles/au-system.css
+   * (built from styles/css.md). Legacy --akal-* variables below alias
+   * the css.md tokens so the whole portal uses one design language.
+   */
+  --akal-gold: var(--color-au-gold, #EAA700);
+  --akal-gold-bright: var(--color-au-darkgold, #F9B900);
+  --akal-gold-hover: var(--color-au-darkgold, #D59400);
   --akal-gold-light: #FFF8E1;
 
-  --akal-petrol: #072C3F;
-  --akal-petrol-dark: #05202E;
-  --akal-petrol-medium: #0A3C55;
-  --akal-petrol-light: #0E4E70;
+  --akal-petrol: var(--color-au-deepteal, #072C3F);
+  --akal-petrol-dark: var(--color-au-deepteal, #05202E);
+  --akal-petrol-medium: var(--color-au-teal, #0A3C55);
+  --akal-petrol-light: var(--color-au-accentteal, #0E4E70);
 
   --akal-blue: #087BB5;
   --akal-blue-hover: #066391;
@@ -27,6 +31,9 @@
   --akal-white: #FFFFFF;
   --akal-light-gray: #F5F7FA;
   --akal-border-gray: #E2E8F0;
+
+  /* Brand accent (css.md) */
+  --color-au-redbadge: var(--color-au-redbadge, #b91c1c);
 
   /* Backward compatibility aliases */
   --akal-yellow: var(--akal-gold);
@@ -53,8 +60,10 @@
   --color-info: #0284C7;
   --color-info-bg: #E0F2FE;
 
-  /* Layout & Sizing */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* Layout & Sizing
+   * --font-sans / --font-serif are defined in ./styles/au-system.css
+   * (css.md): "Plus Jakarta Sans" / "Playfair Display".
+   */
   --container-max-width: 1280px;
   --page-gutter: 24px;
 

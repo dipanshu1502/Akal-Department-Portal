@@ -43,18 +43,18 @@ export default function DepartmentDetailPage() {
 
   if (loading) {
     return (
-      <div className="university-container" style={{ padding: "96px 0", textAlign: "center" }}>
-        <div className="spinner-border text-primary" role="status" style={{ width: "3rem", height: "3rem" }}>
+      <div className="university-container dept-loading-state">
+        <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading department...</span>
         </div>
-        <p style={{ marginTop: 16, color: "#64748B", fontSize: 16 }}>Loading department details...</p>
+        <p className="dept-loading-text">Loading department details...</p>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="university-container" style={{ padding: "80px 0", textAlign: "center" }}>
+      <div className="university-container dept-error-state">
         <div className="dept-error-card">
           <h2>{error || "Department Unavailable"}</h2>
           <p>The requested department page is either unpublished or does not exist.</p>
@@ -395,7 +395,7 @@ export default function DepartmentDetailPage() {
       )}
 
       {/* Contact Section */}
-      <section className="university-container" id="contact" style={{ marginBottom: 64 }}>
+      <section className="university-container dept-contact-section" id="contact">
         <div className="dept-contact-card">
           <h2>Contact {department.name}</h2>
           <p>Get in touch with the department office for admissions, academic inquiries, or collaborative research.</p>
