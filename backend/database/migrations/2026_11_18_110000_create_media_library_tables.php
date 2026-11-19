@@ -9,16 +9,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('media_categories', function (Blueprint $table) {
+        if (! Schema::hasTable('media_categories')) {
+            Schema::create('media_categories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('department_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('media_type')->default('both');
             $table->timestamps();
             $table->index(['department_id', 'media_type']);
-        });
+            });
+        }
 
-        Schema::create('media', function (Blueprint $table) {
+        if (! Schema::hasTable('media')) {
+            Schema::create('media', function (Blueprint $table) {
             $table->id();
             $table->foreignId('department_id')->constrained()->cascadeOnDelete();
             $table->foreignId('uploaded_by')->constrained('users')->cascadeOnDelete();
@@ -47,7 +50,25 @@ return new class extends Migration
             $table->softDeletes();
             $table->index(['department_id', 'status', 'media_type']);
             $table->index(['category_id', 'created_at']);
-        });
+            });
+        } else {
+            $columns = [
+                'replaces_media_id' => fn (Blueprint $table) => $table->foreignId('replaces_media_id')->nullable()->constrained('media')->nullOnDelete(),
+                'reviewed_by' => fn (Blueprint $table) => $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete(),
+                'display_order' => fn (Blueprint $table) => $table->unsignedInteger('display_order')->default(0),
+                'review_comments' => fn (Blueprint $table) => $table->text('review_comments')->nullable(),
+                'delete_requested' => fn (Blueprint $table) => $table->boolean('delete_requested')->default(false),
+                'submitted_at' => fn (Blueprint $table) => $table->timestamp('submitted_at')->nullable(),
+                'reviewed_at' => fn (Blueprint $table) => $table->timestamp('reviewed_at')->nullable(),
+                'published_at' => fn (Blueprint $table) => $table->timestamp('published_at')->nullable(),
+                'deleted_at' => fn (Blueprint $table) => $table->softDeletes(),
+            ];
+            foreach ($columns as $name => $addColumn) {
+                if (! Schema::hasColumn('media', $name)) {
+                    Schema::table('media', $addColumn);
+                }
+            }
+        }
 
         $now = now();
         $categories = [
@@ -77,12 +98,18 @@ return new class extends Migration
         ];
 
         foreach ($categories as [$name, $mediaType]) {
-            DB::table('media_categories')->insert([
+            $values = [
                 'name' => $name,
                 'media_type' => $mediaType,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ]);
+            ];
+            if (Schema::hasColumn('media_categories', 'slug')) {
+                $values['slug'] = str($name)->slug();
+            }
+            if (! DB::table('media_categories')->where('name', $name)->exists()) {
+                DB::table('media_categories')->insert($values);
+            }
         }
     }
 

@@ -30,6 +30,8 @@ export default function DepartmentProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [pendingReview, setPendingReview] = useState(false);
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export default function DepartmentProfilePage() {
     if (!selectedDeptId) return;
 
     setLoading(true);
+    setPendingReview(false);
     getDepartmentSettings(selectedDeptId)
       .then((res) => {
         const data = res?.settings || res || {};
@@ -74,6 +77,7 @@ export default function DepartmentProfilePage() {
   }, [selectedDeptId]);
 
   const handleField = (key, val) => {
+    setPendingReview(false);
     setSettings((prev) => ({ ...prev, [key]: val }));
   };
 
@@ -94,7 +98,8 @@ export default function DepartmentProfilePage() {
   };
 
   const handleSubmitForReview = async () => {
-    setSaving(true);
+    if (submittingReview || pendingReview || !selectedDeptId) return;
+    setSubmittingReview(true);
     setMessage(null);
 
     try {
@@ -105,12 +110,13 @@ export default function DepartmentProfilePage() {
         payload: settings,
         status: 'pending',
       });
+      setPendingReview(true);
       setMessage({ type: 'success', text: 'Settings submitted to Super Admin for approval review!' });
       setTimeout(() => setMessage(null), 4000);
     } catch (err) {
       alert(err.response?.data?.message || 'Error submitting settings for review');
     } finally {
-      setSaving(false);
+      setSubmittingReview(false);
     }
   };
 
@@ -309,10 +315,10 @@ export default function DepartmentProfilePage() {
               type="button"
               className="btn-success"
               onClick={handleSubmitForReview}
-              disabled={saving || loading}
+              disabled={saving || loading || submittingReview || pendingReview}
             >
               <Send size={15} />
-              <span>Submit Changes for Review</span>
+              <span>{submittingReview ? 'Submitting...' : pendingReview ? 'Submitted for Review' : 'Submit Changes for Review'}</span>
             </button>
 
             <button type="submit" className="btn-primary" disabled={saving || loading}>

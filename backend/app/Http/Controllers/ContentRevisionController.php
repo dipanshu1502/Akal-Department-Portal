@@ -7,7 +7,9 @@ use App\ContentRevision;
 use App\Department;
 use App\DepartmentSection;
 use App\DepartmentSetting;
+use App\Media;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ContentRevisionController extends Controller
 {
@@ -80,16 +82,39 @@ class ContentRevisionController extends Controller
 
         $status = $payload['status'] ?? 'pending';
 
-        $revision = ContentRevision::create([
-            'department_id' => $payload['department_id'],
-            'section_id' => $payload['section_id'] ?? null,
-            'model_type' => $payload['model_type'] ?? 'section',
-            'title' => $payload['title'],
-            'payload' => $payload['payload'],
-            'status' => $status,
-            'user_id' => $user->id,
-            'submitted_at' => $status === 'pending' ? now() : null,
-        ]);
+        $revision = DB::transaction(function () use ($payload, $status, $user) {
+            if (($payload['model_type'] ?? 'section') === 'settings' && $status === 'pending') {
+                $query = ContentRevision::query()
+                    ->where('department_id', $payload['department_id'])
+                    ->where('model_type', 'settings')
+                    ->where('status', 'pending');
+
+                // Return the existing pending submission instead of creating duplicates.
+                $existing = $query->lockForUpdate()->latest()->first();
+                if ($existing) {
+                    return $existing;
+                }
+            }
+
+            return ContentRevision::create([
+                'department_id' => $payload['department_id'],
+                'section_id' => $payload['section_id'] ?? null,
+                'model_type' => $payload['model_type'] ?? 'section',
+                'title' => $payload['title'],
+                'payload' => $payload['payload'],
+                'status' => $status,
+                'user_id' => $user->id,
+                'submitted_at' => $status === 'pending' ? now() : null,
+            ]);
+        });
+
+
+        if (! $revision->wasRecentlyCreated) {
+            return response()->json([
+                'message' => 'A settings update is already pending review.',
+                'data' => $revision->load(['department', 'submitter']),
+            ]);
+        }
 
         ActivityLog::log(
             'submitted_revision',
@@ -112,12 +137,48 @@ class ContentRevisionController extends Controller
             abort(403, 'Only super administrators can approve revisions.');
         }
 
-        $revision->update([
-            'status' => 'approved',
-            'reviewer_id' => $user->id,
-            'reviewed_at' => now(),
-            'review_comments' => $request->input('comments', 'Approved by Super Admin.'),
-        ]);
+        DB::transaction(function () use ($revision, $user, $request) {
+            $approvedAt = now();
+            $revision->update([
+                // Settings are live site configuration, so approval applies them immediately.
+                'status' => $revision->model_type === 'settings' ? 'published' : 'approved',
+                'reviewer_id' => $user->id,
+                'reviewed_at' => $approvedAt,
+                'review_comments' => $request->input('comments', 'Approved by Super Admin.'),
+                'published_at' => $revision->model_type === 'settings' ? $approvedAt : null,
+            ]);
+
+            if ($revision->model_type === 'settings') {
+                $settings = DepartmentSetting::firstOrCreate(['department_id' => $revision->department_id]);
+                $settings->update($revision->payload);
+
+                // A HOD photo uploaded through this profile is part of the same
+                // settings submission, so publish that referenced image with it.
+                $photoPath = $revision->payload['hod_photo'] ?? null;
+                if ($photoPath) {
+                    $photo = Media::where('department_id', $revision->department_id)
+                        ->where('file_path', $photoPath)
+                        ->where('media_type', 'image')
+                        ->whereIn('status', ['pending', 'approved'])
+                        ->first();
+
+                    if ($photo) {
+                        if ($photo->replaces_media_id) {
+                            $photo->replacement()->update(['status' => 'archived']);
+                        }
+                        $photo->update([
+                            'status' => 'published',
+                            'reviewer_id' => $user->id,
+                            'reviewed_at' => $approvedAt,
+                            'published_at' => $approvedAt,
+                            'review_comments' => 'Published with approved department profile settings.',
+                        ]);
+                    }
+                }
+            }
+        });
+
+        $isSettings = $revision->model_type === 'settings';
 
         ActivityLog::log(
             'approved_revision',
@@ -127,7 +188,9 @@ class ContentRevisionController extends Controller
         );
 
         return response()->json([
-            'message' => 'Revision approved successfully. You may now publish it.',
+            'message' => $isSettings
+                ? 'Settings approved and published to the live department website.'
+                : 'Revision approved successfully. You may now publish it.',
             'data' => $revision->load(['department', 'submitter', 'reviewer']),
         ]);
     }

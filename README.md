@@ -123,23 +123,20 @@ To ensure institutional compliance, Department Admins cannot publish directly to
    APP_DEBUG=true
    APP_URL=http://127.0.0.1:8000
 
-   # Option A: SQLite (Default Development)
-   DB_CONNECTION=sqlite
-
-   # Option B: MySQL (XAMPP or Production)
-   # DB_CONNECTION=mysql
-   # DB_HOST=127.0.0.1
-   # DB_PORT=3306
-   # DB_DATABASE=akal_department_portal
-   # DB_USERNAME=root
-   # DB_PASSWORD=
+   # MySQL (XAMPP or Production)
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=akal_department_portal
+   DB_USERNAME=root
+   DB_PASSWORD=
    ```
 
 4. Run Migrations & Seed Institutional Data:
    ```bash
-   php artisan migrate:fresh --seed
+   php artisan migrate --seed
    ```
-   *(This creates faculties, departments, 8 section layout schemas, 5 fully populated departments, academic modules, and test users).*
+   *(This applies pending migrations and seeds institutional data. Use `migrate:fresh --seed` only when you intentionally want to erase and rebuild the database.)*
 
 5. Link Laravel's public upload storage:
    ```bash
