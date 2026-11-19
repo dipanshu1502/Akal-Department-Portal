@@ -1,0 +1,24 @@
+# Dependencies and builds
+node_modules/
+vendor/
+dist/
+build/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Laravel runtime
+backend/storage/*.key
+backend/storage/framework/cache/**
+backend/storage/framework/sessions/**
+backend/storage/framework/views/**
+backend/storage/logs/**
+backend/bootstrap/cache/*.php
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
